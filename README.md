@@ -129,3 +129,21 @@ All admin areas are restricted and hidden from the public.
 
 ## 🧱 Project Structure
 
+/
+├── wordpress/ # WordPress core and theme files
+├── wp-content/ # Plugins, themes, and uploads
+├── docker/ # Container setup for WordPress + MariaDB + Redis
+├── docs/ # Internal documentation
+└── README.md # This file
+
+
+---
+
+## 👤 Client
+
+**AwardVantage** — powered by the Mobility Trailblazers platform  
+Built in partnership with **Tobias Tomczak** and **Hans-Peter Kleebinder**.
+
+---
+
+© 2025 AwardVantage. All rights reserved.
