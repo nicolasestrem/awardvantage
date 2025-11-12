@@ -1,0 +1,47 @@
+Brief Summary
+Strong brief
+
+Client
+Award Vantage
+
+Business Type
+cloud-based software platform for managing awards, rankings, and voting programs
+
+Showcase
+provides a white-label digital platform for managing awards, rankings, and voting programs. It enables organizations to collect applications, run juries, and publish results in a streamlined and transparent way. Develops and operates cloud-based software that supports award programs and competitions, including candidate management, jury voting, analytics, and public voting interfaces. Cloud software for award and voting management.
+
+Services
+award program management software, online platform for candidate submissions, jury voting, public voting, result publication, analytics dashboard, user account management. We provide an online platform that helps organizations manage awards and competitions. Our website offers tools for candidate submissions, jury voting, public voting, and result publication.
+
+Goals
+allow organizations to request demos or start their own award programs through the website, demonstrate software features, collect client feedback, build credibility and trust through case studies and testimonials, provide clear documentation and support resources for users, collect feedback to improve the platform. Build credibility and trust through case studies and testimonials, provide clear documentation and support resources for users, and collect feedback to improve the platform.
+
+Features
+candidate submissions, jury voting, public voting, result publication, analytics dashboard, user account management
+
+Tone And Voice
+professional and clear, friendly and approachable
+
+Sitemap
+Home, Vote, Account Management, Support
+
+Audience
+PhD educated students and professors, ranging from 28 to 60 years old
+
+Brand Style
+Primary Green (#00694E) for buttons, logo accents, and CTAs; Dark Teal (#084452) for top navigation or hero sections; White (#FFFFFF) and Light Gray (#F4F5F7) for content backgrounds; Text Gray (#333333) for body text; Secondary Green (#009879) for highlights or buttons; Accent Blue (#0072BC) optional for links or hover states if needed. Use Primary Green for buttons, logo accents, and CTAs. Use Dark Teal for top navigation or hero sections. Keep White / Light Gray for content backgrounds. Use Text Gray for body text.
+
+Integrations
+none
+
+Competitor List
+none
+
+User Experience
+fast loading times, mobile optimization
+
+Site Language
+German
+
+Additional Requirements
+The entire website must be accessible only after logging in, remain private to the public and search engines, and users should not have access to wp-admin. Logins and passwords will be provided to users.

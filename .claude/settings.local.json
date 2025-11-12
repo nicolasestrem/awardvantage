@@ -1,0 +1,34 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl:*)",
+      "Bash(chmod:*)",
+      "Bash(sudo mv:*)",
+      "Bash(wp --info:*)",
+      "Bash(sudo -S mv:*)",
+      "Bash(docker compose:*)",
+      "Bash(npx --version:*)",
+      "Bash(node --version:*)",
+      "Bash(timeout 5 npx:*)",
+      "Bash(command -v:*)",
+      "Bash(whereis:*)",
+      "Bash(echo:*)",
+      "Bash(\"/mnt/c/Program Files/nodejs/node.exe\" --version)",
+      "Bash(sudo -E bash -)",
+      "Bash(sudo apt-get:*)",
+      "Bash(sudo -S bash -)",
+      "Bash(npm --version:*)",
+      "Bash(timeout 3 npx:*)",
+      "Bash(cat:*)",
+      "Bash(for dir in \"/home/nicol/Documents\" \"/home/nicol/Desktop\" \"/home/nicol/Downloads\" \"/home/nicol/Projects\" \"/mnt/c/Users/nicol\")",
+      "Bash(do if [ -d \"$dir\" ])",
+      "Bash(then echo \"EXISTS: $dir\")",
+      "Bash(else echo \"MISSING: $dir\")",
+      "Bash(fi)",
+      "Bash(done)",
+      "Bash(git config:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
