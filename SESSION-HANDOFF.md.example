@@ -1,0 +1,532 @@
+# Session Handoff - Best-Teacher Award Import Scripts Debugging
+
+> **⚠️ SECURITY NOTICE:**
+> This is an EXAMPLE/TEMPLATE file. Replace all placeholder values with your actual credentials.
+> **NEVER commit the real SESSION-HANDOFF.md file with production credentials to version control!**
+
+**Date:** 2025-11-13
+**Status:** BLOCKED - Import scripts not processing CSV files
+**Priority:** HIGH - Production deployment waiting
+
+---
+
+## OVERALL OBJECTIVE
+
+Import 38 Mobility Trailblazers candidates into the Best-Teacher Award #class25 WordPress production environment using WP-CLI bash scripts. The import functionality documented in the plugin doesn't exist, so we created custom scripts.
+
+**Production Server:** root@YOUR_SERVER_IP (password: YOUR_ROOT_PASSWORD)
+**Production Path:** `/mnt/ssd1tb/dietpi_userdata/docker-files/awardvantage/`
+**Docker Container:** awardvantage_wpcli
+**WordPress Post Type:** mt_candidate
+**WordPress User Role:** mt_jury_member
+
+---
+
+## WHAT WE ACCOMPLISHED IN THIS SESSION
+
+### 1. Confirmed File Transfer Complete ✓
+All files successfully copied from local Windows machine to production server:
+- `import-candidates.sh` - Candidate import script
+- `import-jury-members.sh` - Jury import script
+- `candidates.csv` - 38 candidates with LinkedIn URLs and photo filenames
+- `jury-members.csv` - Jury member template data
+- `private/candidate-photos/` - Directory with 24 candidate photos
+
+### 2. Made Scripts Executable ✓
+```bash
+chmod +x import-candidates.sh import-jury-members.sh
+```
+
+### 3. Verified CSV File Format ✓
+**Command run:**
+```bash
+head -5 candidates.csv | od -c
+```
+
+**Result:** CSV has proper Unix line endings (`\n` only, no `\r\n`), 39 lines total (1 header + 38 candidates)
+
+**Sample CSV content verified:**
+```csv
+name,linkedin_url,photo_filename
+Alexander Bilgeri,https://www.linkedin.com/in/alexander-bilgeri-40b4143b/,AlexanderBilgeri.jpg
+Andreas Herrmann,https://ch.linkedin.com/in/andreas-herrmann-4053541,AndreasHerrmann.webp
+Anjes Tjarks,https://www.linkedin.com/in/anjes-tjarks-19356835/,AnjesTjarks.jpg
+```
+
+### 4. Ran Line Ending Fix (preventative) ✓
+```bash
+sed -i 's/\r$//' candidates.csv
+```
+
+### 5. Attempted Import Multiple Times ✗
+**Command executed:**
+```bash
+./import-candidates.sh candidates.csv "/mnt/ssd1tb/dietpi_userdata/docker-files/awardvantage/private/candidate-photos/"
+```
+
+**Output:**
+```
+==================================================
+ Best-Teacher Award - Candidate Import
+==================================================
+
+[INFO] CSV File: candidates.csv
+[INFO] Photo Directory: /mnt/ssd1tb/dietpi_userdata/docker-files/awardvantage/private/candidate-photos/
+[INFO] Container: awardvantage_wpcli
+[INFO] Log File: import-candidates-20251113-061236.log
+
+==================================================
+ Importing Candidates
+==================================================
+
+root@DietPi:/mnt/ssd1tb/dietpi_userdata/docker-files/awardvantage#
+```
+
+**Problem:** Script header prints successfully, but NO candidates are processed. The while loop never executes.
+
+---
+
+## THE PROBLEM - CRITICAL ISSUE
+
+**File:** `/mnt/ssd1tb/dietpi_userdata/docker-files/awardvantage/import-candidates.sh`
+
+The bash while loop that reads the CSV file is NOT executing. Lines 170-187 of the script:
+
+```bash
+# Main import loop
+print_header "Importing Candidates"
+
+line_number=0
+while IFS=',' read -r name linkedin_url photo_filename || [ -n "$name" ]; do
+    ((line_number++))
+
+    # Skip empty lines
+    if [ -z "$name" ]; then
+        continue
+    fi
+
+    # Skip header row if it exists
+    if [ "$line_number" -eq 1 ] && [ "$name" = "name" ]; then
+        log "Skipping header row"
+        continue
+    fi
+
+    # Import the candidate
+    import_candidate "$name" "$linkedin_url" "$photo_filename"
+
+done < "$CSV_FILE"
+```
+
+**Expected behavior:** Should process 38 candidates after skipping header row
+**Actual behavior:** Loop never executes, no candidates processed, script exits silently
+
+**Evidence:**
+- Script prints "Importing Candidates" header ✓
+- No "Skipping header row" message appears ✗
+- No "Processing: [name]" messages appear ✗
+- No success or error messages ✗
+- Script exits immediately after printing header ✗
+
+---
+
+## FILES INVOLVED - COMPLETE LIST
+
+### On Production Server: `/mnt/ssd1tb/dietpi_userdata/docker-files/awardvantage/`
+
+1. **import-candidates.sh** (212 lines)
+   - Main candidate import script
+   - Line 170-187: CSV reading while loop (NOT WORKING)
+   - Line 82-164: import_candidate() function
+   - Line 13: `CSV_FILE="${1:-candidates.csv}"`
+   - Line 14: `PHOTO_DIR="${2:-.}"`
+
+2. **import-jury-members.sh** (245 lines)
+   - Jury member import script
+   - Line 181-198: Similar CSV reading loop
+   - NOT YET TESTED (blocked by candidates.sh issue)
+
+3. **candidates.csv** (40 lines including empty line 40)
+   - Header: `name,linkedin_url,photo_filename`
+   - 38 candidate records
+   - Line endings: Unix format (`\n`)
+   - Encoding: ASCII/UTF-8
+   - File size: Should be ~3KB
+
+4. **jury-members.csv** (7 lines)
+   - Header: `username,email,first_name,last_name`
+   - 5 sample jury records
+   - NOT YET USED
+
+5. **IMPORT-GUIDE.md** (185 lines)
+   - User documentation
+   - Updated with production paths
+   - Reference only
+
+6. **private/candidate-photos/** (directory)
+   - Contains 24 photos (.jpg, .webp, .png)
+   - Examples: AlexanderBilgeri.jpg, AndreasHerrmann.webp
+   - 14 candidates have no photos (empty photo_filename in CSV)
+
+### Log Files Created:
+- `import-candidates-20251113-061236.log` (most recent)
+- Previous logs: `import-candidates-20251113-060209.log`, etc.
+
+---
+
+## DIAGNOSTIC STEPS ALREADY TAKEN
+
+### 1. Verified CSV Line Endings ✓
+```bash
+head -5 candidates.csv | od -c
+```
+Result: Unix format (`\n`), no Windows `\r` characters
+
+### 2. Counted CSV Lines ✓
+```bash
+wc -l candidates.csv
+```
+Result: 39 lines (correct)
+
+### 3. Viewed CSV Content ✓
+```bash
+head -10 candidates.csv
+```
+Result: Properly formatted CSV with comma delimiters
+
+### 4. Applied Line Ending Fix ✓
+```bash
+sed -i 's/\r$//' candidates.csv
+```
+Result: No change needed (already Unix format)
+
+### 5. Attempted Import Multiple Times ✗
+Result: Same issue - while loop doesn't execute
+
+---
+
+## NEXT STEPS - IMMEDIATE ACTIONS REQUIRED
+
+### Step 1: Check Log File for Hidden Errors
+```bash
+cd /mnt/ssd1tb/dietpi_userdata/docker-files/awardvantage
+cat import-candidates-20251113-061236.log
+```
+
+**Look for:**
+- Any error messages not shown in stdout
+- Docker container connectivity errors
+- File permission errors
+
+### Step 2: Test CSV Parsing Directly
+Run this diagnostic command to verify bash can read the CSV:
+
+```bash
+cd /mnt/ssd1tb/dietpi_userdata/docker-files/awardvantage
+line_number=0
+while IFS=',' read -r name linkedin_url photo_filename || [ -n "$name" ]; do
+    ((line_number++))
+    echo "Line $line_number: [$name] [$linkedin_url] [$photo_filename]"
+    if [ $line_number -ge 5 ]; then break; fi
+done < candidates.csv
+```
+
+**Expected output:**
+```
+Line 1: [name] [linkedin_url] [photo_filename]
+Line 2: [Alexander Bilgeri] [https://www.linkedin.com/in/alexander-bilgeri-40b4143b/] [AlexanderBilgeri.jpg]
+Line 3: [Andreas Herrmann] [https://ch.linkedin.com/in/andreas-herrmann-4053541] [AndreasHerrmann.webp]
+Line 4: [Anjes Tjarks] [https://www.linkedin.com/in/anjes-tjarks-19356835/] [AnjesTjarks.jpg]
+Line 5: [Astrid Fontaine] [https://www.linkedin.com/in/dr-astrid-fontaine-28374519/] [AstridFontaine.jpg]
+```
+
+**If NO output appears:** The problem is with CSV file encoding or hidden characters
+
+### Step 3: Check File Encoding
+```bash
+file candidates.csv
+```
+
+**Expected:** `candidates.csv: ASCII text` or `UTF-8 Unicode text`
+**If different:** File encoding issue - needs conversion
+
+### Step 4: Check for Hidden Characters
+```bash
+cat -A candidates.csv | head -5
+```
+
+**Expected:**
+```
+name,linkedin_url,photo_filename$
+Alexander Bilgeri,https://www.linkedin.com/in/alexander-bilgeri-40b4143b/,AlexanderBilgeri.jpg$
+```
+
+**Look for:**
+- `^M` characters (Windows carriage returns)
+- Unusual spacing or tabs
+- Non-printable characters
+
+### Step 5: Verify Docker Container is Running
+```bash
+docker ps | grep awardvantage
+```
+
+**Expected:** Should show containers: awardvantage_wpcli, awardvantage_wordpress, awardvantage_mariadb
+
+**If NOT running:**
+```bash
+cd /mnt/ssd1tb/dietpi_userdata/docker-files/awardvantage
+docker-compose up -d
+```
+
+### Step 6: Test WP-CLI Access
+```bash
+docker exec awardvantage_wpcli wp --info --allow-root
+```
+
+**Expected:** WordPress version info and PHP details
+**If error:** Docker container issue - restart containers
+
+---
+
+## LIKELY ROOT CAUSES (In Order of Probability)
+
+### 1. CSV File Encoding Issue (MOST LIKELY)
+**Symptom:** While loop doesn't execute at all
+**Cause:** File created on Windows, transferred to Linux, encoding mismatch
+**Fix:**
+```bash
+# Re-create CSV with proper encoding
+iconv -f UTF-8 -t ASCII//TRANSLIT candidates.csv > candidates_fixed.csv
+mv candidates_fixed.csv candidates.csv
+
+# Or recreate from scratch on Linux
+cat > candidates.csv << 'EOF'
+name,linkedin_url,photo_filename
+Alexander Bilgeri,https://www.linkedin.com/in/alexander-bilgeri-40b4143b/,AlexanderBilgeri.jpg
+[rest of data]
+EOF
+```
+
+### 2. Bash Script Line Ending Issue
+**Symptom:** Script itself has wrong line endings
+**Cause:** import-candidates.sh created on Windows
+**Fix:**
+```bash
+sed -i 's/\r$//' import-candidates.sh
+chmod +x import-candidates.sh
+```
+
+### 3. Hidden BOM (Byte Order Mark) in CSV
+**Symptom:** CSV looks fine but bash can't read it
+**Cause:** Windows Excel/text editor added UTF-8 BOM
+**Fix:**
+```bash
+# Remove BOM
+sed -i '1s/^\xEF\xBB\xBF//' candidates.csv
+```
+
+### 4. Variable Expansion Issue
+**Symptom:** $CSV_FILE variable not set correctly
+**Debug:**
+```bash
+# Add debugging to script
+echo "DEBUG: CSV_FILE = [$CSV_FILE]"
+echo "DEBUG: File exists: $([ -f "$CSV_FILE" ] && echo YES || echo NO)"
+```
+
+---
+
+## STRATEGY FOR NEXT SESSION
+
+### Phase 1: Diagnose CSV Reading Issue (15 minutes)
+1. Run Step 2 diagnostic command (test CSV parsing)
+2. If output appears → CSV is readable, issue is in script logic
+3. If NO output → CSV encoding problem, proceed to Phase 2
+4. Check log file for hidden errors
+5. Verify Docker container status
+
+### Phase 2: Fix CSV File (if needed) (10 minutes)
+1. Check encoding with `file candidates.csv`
+2. Remove BOM if present: `sed -i '1s/^\xEF\xBB\xBF//' candidates.csv`
+3. Convert encoding: `iconv -f UTF-8 -t ASCII//TRANSLIT candidates.csv > temp.csv && mv temp.csv candidates.csv`
+4. Re-test with Step 2 diagnostic command
+5. Verify output shows candidate data
+
+### Phase 3: Fix Script if CSV is Readable (10 minutes)
+If CSV parsing works in diagnostic but not in script:
+
+1. Add debug output to import-candidates.sh:
+```bash
+# Add after line 177 (print_header "Importing Candidates")
+echo "DEBUG: Starting CSV read loop"
+echo "DEBUG: CSV_FILE = [$CSV_FILE]"
+echo "DEBUG: File exists = $([ -f "$CSV_FILE" ] && echo YES || echo NO)"
+
+# Add inside while loop after line 171
+echo "DEBUG: Read line $line_number: name=[$name]"
+```
+
+2. Re-run script with debugging
+3. Identify where script fails
+4. Fix logic error
+
+### Phase 4: Execute Import (30 minutes)
+Once CSV reading works:
+
+1. Run full candidate import:
+```bash
+./import-candidates.sh candidates.csv "/mnt/ssd1tb/dietpi_userdata/docker-files/awardvantage/private/candidate-photos/"
+```
+
+2. Monitor output for:
+   - "Skipping header row" message
+   - "Processing: [name]" for each candidate
+   - Photo upload success/failures
+   - Final count: "Successfully imported: 38"
+
+3. Verify in WordPress:
+```bash
+docker exec awardvantage_wpcli wp post list --post_type=mt_candidate --format=count --allow-root
+```
+Expected: 38
+
+4. View imported candidates:
+```bash
+docker exec awardvantage_wpcli wp post list --post_type=mt_candidate --fields=ID,post_title --allow-root
+```
+
+### Phase 5: Import Jury Members (15 minutes)
+After candidates succeed:
+
+1. Update jury-members.csv with real data (if not already done)
+2. Fix line endings: `sed -i 's/\r$//' jury-members.csv`
+3. Run import:
+```bash
+./import-jury-members.sh jury-members.csv
+```
+
+4. Verify:
+```bash
+docker exec awardvantage_wpcli wp user list --role=mt_jury_member --format=count --allow-root
+```
+
+5. Securely distribute credentials from `jury-credentials-*.txt`
+
+---
+
+## COMMAND REFERENCE - QUICK COPY-PASTE
+
+### SSH to Production Server
+```bash
+ssh root@YOUR_SERVER_IP
+# Password: YOUR_ROOT_PASSWORD
+```
+
+### Navigate to Working Directory
+```bash
+cd /mnt/ssd1tb/dietpi_userdata/docker-files/awardvantage
+```
+
+### Test CSV Parsing (CRITICAL DIAGNOSTIC)
+```bash
+line_number=0
+while IFS=',' read -r name linkedin_url photo_filename || [ -n "$name" ]; do
+    ((line_number++))
+    echo "Line $line_number: [$name] [$linkedin_url] [$photo_filename]"
+    if [ $line_number -ge 5 ]; then break; fi
+done < candidates.csv
+```
+
+### Check CSV Encoding
+```bash
+file candidates.csv
+cat -A candidates.csv | head -5
+```
+
+### Fix CSV Encoding Issues
+```bash
+# Remove BOM
+sed -i '1s/^\xEF\xBB\xBF//' candidates.csv
+
+# Fix line endings
+sed -i 's/\r$//' candidates.csv
+
+# Convert encoding if needed
+iconv -f UTF-8 -t ASCII//TRANSLIT candidates.csv > temp.csv && mv temp.csv candidates.csv
+```
+
+### Run Import (Once Fixed)
+```bash
+./import-candidates.sh candidates.csv "/mnt/ssd1tb/dietpi_userdata/docker-files/awardvantage/private/candidate-photos/"
+```
+
+### Verify Import Success
+```bash
+# Count candidates
+docker exec awardvantage_wpcli wp post list --post_type=mt_candidate --format=count --allow-root
+
+# List candidates
+docker exec awardvantage_wpcli wp post list --post_type=mt_candidate --fields=ID,post_title --allow-root
+```
+
+---
+
+## SUCCESS CRITERIA
+
+### Candidate Import Complete When:
+- ✓ Script shows "Skipping header row"
+- ✓ Script shows "Processing: [name]" for all 38 candidates
+- ✓ Script shows "Successfully imported: 38"
+- ✓ WP-CLI count shows 38 candidates
+- ✓ Photos uploaded for 24 candidates with photo files
+- ✓ LinkedIn URLs stored in post meta
+
+### Jury Import Complete When:
+- ✓ Script shows credentials for all jury members
+- ✓ Credentials saved to `jury-credentials-*.txt`
+- ✓ WP-CLI user list shows all jury members with mt_jury_member role
+- ✓ Admin toolbar disabled for jury users
+
+---
+
+## CRITICAL NOTES
+
+1. **DO NOT** modify the CSV format - it must remain: `name,linkedin_url,photo_filename`
+2. **DO NOT** add organization, position, website fields - user explicitly rejected these
+3. **DO NOT** create jury member posts - only user accounts
+4. **CSV has 38 candidates** - line 40 is empty, ignore it
+5. **24 photos available** - 14 candidates have no photo (empty photo_filename)
+6. **Production server** - be careful with commands, no rollback available
+7. **Credentials file** - jury-credentials-*.txt contains plaintext passwords, delete after distribution
+
+---
+
+## RELEVANT FILE LOCATIONS
+
+**Local (Windows/WSL):**
+- `/mnt/c/Users/nicol/Desktop/awardvantage/deploy/` - All source files
+- `/mnt/c/Users/nicol/Desktop/awardvantage/private/candidate-photos/` - Photo files
+
+**Production Server (YOUR_SERVER_IP):**
+- `/mnt/ssd1tb/dietpi_userdata/docker-files/awardvantage/` - Working directory
+- `/mnt/ssd1tb/dietpi_userdata/docker-files/awardvantage/private/candidate-photos/` - Photos
+- `/mnt/ssd1tb/dietpi_userdata/docker-files/awardvantage/import-candidates-*.log` - Log files
+- `/mnt/ssd1tb/dietpi_userdata/docker-files/awardvantage/jury-credentials-*.txt` - Credentials
+
+**WordPress Site:**
+- https://awardvantage.com - Production site
+- https://awardvantage.com/jury-dashboard/ - Jury login page
+
+---
+
+## WHAT TO SAY IN NEXT SESSION
+
+**Start with:** "I need to debug why the import-candidates.sh script isn't reading the CSV file. The script starts but the while loop never executes - no candidates are processed."
+
+**Then run:** The CSV parsing diagnostic test (Step 2 above) to determine if this is a CSV encoding issue or a script logic issue.
+
+**Goal:** Get 38 candidates imported into WordPress production environment.
+
+---
+
+**END OF HANDOFF - SESSION READY TO RESUME**

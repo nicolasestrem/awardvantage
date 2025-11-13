@@ -49,3 +49,61 @@ wp-config.php
 /private
 /import/
 /deploy
+
+# === SECURITY: Sensitive Files (DO NOT COMMIT) ===
+
+# Documentation with production credentials
+CLAUDE.md
+SESSION-HANDOFF.md
+
+# Personal data files (PII/GDPR compliance)
+*.csv
+jury-members.csv
+candidates.csv
+
+# Local configuration
+.claude/settings.local.json
+
+# Candidate photos (PII)
+candidate-photos/
+
+# Credential files
+*credentials*.txt
+*password*.txt
+*secret*.txt
+*key*.txt
+
+# Environment files
+.env
+.env.local
+.env.production
+.env.development
+
+# WordPress configuration variants
+wp-config-local.php
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# IDE specific
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Log files (additional)
+npm-debug.log*
+error_log
+debug.log
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# Backup files
+*.backup
+*.bak
+*.old

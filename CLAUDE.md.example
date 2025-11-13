@@ -1,0 +1,350 @@
+# CLAUDE.md
+
+> **⚠️ SECURITY NOTICE:**
+> This is an EXAMPLE/TEMPLATE file. Replace all placeholder values with your actual credentials.
+> **NEVER commit the real CLAUDE.md file with production credentials to version control!**
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Project Overview
+
+**AwardVantage** - Docker-based WordPress installation hosting the "Best-Teacher Award #class25" plugin for managing the prestigious "25 Mobility Trailblazers in 25" award platform. Recognizes excellence in teaching and mobility innovation across the DACH region (Germany, Austria, Switzerland).
+
+**Production URL:** https://awardvantage.com
+**Server:** root@YOUR_SERVER_IP
+**Base Path:** `/mnt/ssd1tb/dietpi_userdata/docker-files/awardvantage/`
+
+## Critical Constraints
+
+⚠️ **DOCKER COMPOSE MANAGED BY KOMODO WEB GUI**
+- ANY changes to `compose.yaml` or docker-compose files are AUTOMATICALLY REVERTED
+- DO NOT modify compose files - changes will be lost
+- All compose changes must be made through Komodo GUI
+- This includes ports, environment variables, volumes, networks
+
+## Docker Architecture
+
+### Containers
+- **awardvantage_wordpress** - WordPress (PHP 8.2-Apache) on port 8010
+- **awardvantage_wpcli** - WP-CLI container (user 33:33)
+- **awardvantage_mariadb** - MariaDB 11 on port 3338
+- **awardvantage_redis** - Redis cache on port 6384
+- **awardvantage_wpcron** - Cron container for scheduled tasks
+
+### Credentials
+- **DB User:** wp_user
+- **DB Password:** YOUR_DB_PASSWORD
+- **DB Name:** wordpress_db
+- **DB Root Password:** YOUR_ROOT_PASSWORD
+- **Redis Password:** YOUR_REDIS_PASSWORD
+
+### Important Paths
+```
+/mnt/ssd1tb/dietpi_userdata/docker-files/awardvantage/
+├── wordpress_data/           # WordPress installation
+│   └── wp-content/
+│       └── plugins/
+│           └── best-teacher-award-class25/  # Main plugin
+├── db_data/                  # MariaDB data
+├── redis_data/              # Redis persistence
+├── deploy/                  # Deployment files and plugin builds
+├── private/                 # Sensitive files (candidate photos)
+├── candidate-photos/        # Public candidate photos
+└── tmp/                     # Temporary uploads
+```
+
+## Common Commands
+
+### Docker Operations
+```bash
+# Check running containers
+docker ps | grep awardvantage
+
+# Access WordPress container shell
+docker exec -it awardvantage_wordpress bash
+
+# View WordPress logs
+docker logs awardvantage_wordpress
+
+# View MariaDB logs
+docker logs awardvantage_mariadb
+
+# Restart all services (only if necessary - prefer Komodo GUI)
+docker restart awardvantage_wordpress awardvantage_mariadb awardvantage_redis
+```
+
+### WP-CLI Commands
+All WP-CLI commands must run through the **awardvantage_wpcli** container:
+
+```bash
+# Template
+docker exec awardvantage_wpcli wp [command] --allow-root
+
+# Plugin management
+docker exec awardvantage_wpcli wp plugin list --allow-root
+docker exec awardvantage_wpcli wp plugin activate best-teacher-award-class25 --allow-root
+docker exec awardvantage_wpcli wp plugin get best-teacher-award-class25 --field=version --allow-root
+
+# Database operations
+docker exec awardvantage_wpcli wp db query "SHOW TABLES LIKE 'wp_mt_%';" --allow-root
+docker exec awardvantage_wpcli wp db optimize --allow-root
+docker exec awardvantage_wpcli wp db export backup-$(date +%Y%m%d-%H%M%S).sql --allow-root
+
+# Cache management
+docker exec awardvantage_wpcli wp cache flush --allow-root
+docker exec awardvantage_wpcli wp rewrite flush --allow-root
+docker exec awardvantage_wpcli wp transient delete --expired --allow-root
+
+# Redis operations
+docker exec awardvantage_redis redis-cli -a YOUR_REDIS_PASSWORD ping
+docker exec awardvantage_redis redis-cli -a YOUR_REDIS_PASSWORD FLUSHALL
+
+# User management
+docker exec awardvantage_wpcli wp user list --role=mt_jury_member --allow-root
+docker exec awardvantage_wpcli wp user create [username] [email] --role=mt_jury_member --allow-root
+
+# Candidate management
+docker exec awardvantage_wpcli wp post list --post_type=mt_candidate --format=count --allow-root
+docker exec awardvantage_wpcli wp post list --post_type=mt_candidate --fields=ID,post_title --allow-root
+```
+
+### Data Import Scripts
+
+Located in root directory - custom bash scripts for bulk operations:
+
+```bash
+# Import candidates from CSV
+./import-candidates.sh candidates.csv "/mnt/ssd1tb/dietpi_userdata/docker-files/awardvantage/private/candidate-photos/"
+
+# Import jury members
+./import-jury-members.sh jury-members.csv
+
+# Deploy plugin updates
+./deploy-docker.sh
+
+# Apply settings hotfix
+./hotfix-settings.sh
+```
+
+**CSV Formats:**
+- **Candidates:** `name,linkedin_url,photo_filename` (name required, others optional)
+- **Jury Members:** `username,email,first_name,last_name` (username and email required)
+
+## Plugin Architecture: Best-Teacher Award #class25
+
+**Version:** 2.5.41-class25
+**Main File:** `wordpress_data/wp-content/plugins/best-teacher-award-class25/mobility-trailblazers.php`
+**Text Domain:** mobility-trailblazers
+**Namespace:** MobilityTrailblazers
+
+### Architecture Patterns
+
+**Dependency Injection Container:**
+- `MT_Container` - Service lifecycle management
+- `MT_Service_Provider` - Service registration
+- Interface-based design for testability
+- Auto-resolution through reflection
+
+**Core Components:**
+```
+includes/
+├── core/              # MT_Plugin, MT_Container, MT_Activator, MT_Config
+├── providers/         # MT_Repository_Provider, MT_Services_Provider
+├── interfaces/        # Service and repository contracts
+├── repositories/      # Data access layer (assignments, candidates, evaluations, audit)
+├── services/          # Business logic (assignment, evaluation, diagnostic)
+├── admin/             # Admin UI, AJAX handlers, columns
+├── ajax/              # Base AJAX class with security validation
+├── widgets/           # Dashboard widgets
+├── cli/               # WP-CLI commands
+├── legacy/            # Backward compatibility
+├── fixes/             # Username validation, photo fixes
+└── utilities/         # Helper functions
+```
+
+### Custom Post Types
+- **mt_candidate** - Candidate profiles with LinkedIn URLs and photos
+- Custom taxonomies and post meta for candidate data
+
+### Custom Database Tables
+- **wp_mt_evaluations** - 5-criteria scoring system (0-10 scale with 0.5 increments)
+- **wp_mt_jury_assignments** - Jury-to-candidate assignments
+- **wp_mt_audit_log** - Comprehensive activity tracking
+- **wp_mt_error_log** - Centralized error logging
+
+### User Roles
+- **Administrator** - Full access
+- **mt_jury_member** - Can access jury dashboard, submit evaluations, NO wp-admin access
+- **mt_jury_admin** - Assignment management, evaluation oversight
+
+### Environment Detection
+Plugin auto-detects environment from `WP_ENVIRONMENT_TYPE` or `wp_get_environment_type()`:
+- `local` or `development` → MT_ENVIRONMENT = development
+- `staging` → MT_ENVIRONMENT = staging
+- Default → MT_ENVIRONMENT = production
+
+Override in wp-config.php:
+```php
+define('MT_ENVIRONMENT', 'production');
+```
+
+### Key Features
+- 5-criteria evaluation framework (Mut & Pioniergeist, Innovationsgrad, Umsetzungskraft, Relevanz, Vorbildfunktion)
+- Drag-and-drop assignment interface
+- Auto-save evaluation drafts
+- CSV import/export with BOM handling
+- Redis caching integration
+- Elementor widget support
+- Bilingual (German/English) with `german-translation-compatibility.php` fallback
+- Rate limiting on AJAX endpoints
+- File upload validation (MIME type, size, malicious content detection)
+
+## Development Workflow
+
+### Plugin Updates
+1. Build plugin ZIP in development environment
+2. Copy to `deploy/` directory
+3. Run `./deploy-docker.sh` or use WP-CLI:
+   ```bash
+   docker cp plugin.zip awardvantage_wordpress:/tmp/
+   docker exec awardvantage_wpcli wp plugin install /tmp/plugin.zip --activate --allow-root
+   docker exec awardvantage_wpcli wp rewrite flush --allow-root
+   docker exec awardvantage_wpcli wp cache flush --allow-root
+   ```
+
+### Database Migrations
+Plugin includes `MT_Database_Upgrade` and migration runner. Migrations auto-run on version change during plugin activation.
+
+### Debugging
+```bash
+# Enable debug mode temporarily
+docker exec awardvantage_wpcli wp config set WP_DEBUG true --raw --allow-root
+docker exec awardvantage_wpcli wp config set WP_DEBUG_LOG true --raw --allow-root
+
+# View error logs
+docker exec awardvantage_wordpress tail -f /var/www/html/wp-content/debug.log
+
+# Query audit log
+docker exec awardvantage_wpcli wp db query "SELECT * FROM wp_mt_audit_log ORDER BY created_at DESC LIMIT 20;" --allow-root
+
+# Disable debug (always return to this state)
+docker exec awardvantage_wpcli wp config set WP_DEBUG false --raw --allow-root
+docker exec awardvantage_wpcli wp config set WP_DEBUG_LOG false --raw --allow-root
+```
+
+### File Permissions
+WordPress runs as `www-data` (user ID 33):
+```bash
+# Fix permissions if needed
+docker exec awardvantage_wordpress chown -R www-data:www-data /var/www/html/wp-content/uploads
+docker exec awardvantage_wordpress chmod -R 755 /var/www/html/wp-content/plugins/best-teacher-award-class25
+```
+
+## Security Considerations
+
+- **HTTPS required** - WP_SITEURL and WP_HOME use https://awardvantage.com
+- **DISABLE_WP_CRON** enabled - cron runs via dedicated container
+- **Redis password protected** - Always use password in commands
+- **Jury members restricted** - No wp-admin access, no admin toolbar
+- **AJAX endpoints** - Nonce verification and capability checks required
+- **File uploads** - MIME validation, size limits, malicious content detection
+- **SQL injection protection** - Prepared statements in all queries
+- **Credentials in jury import** - Delete `jury-credentials-*.txt` after distribution
+
+## Maintenance Tasks
+
+### Daily
+```bash
+docker exec awardvantage_wpcli wp transient delete --expired --allow-root
+```
+
+### Weekly
+```bash
+docker exec awardvantage_wpcli wp db optimize --allow-root
+```
+
+### Before Major Events
+```bash
+# Full cache clear
+docker exec awardvantage_wpcli wp cache flush --allow-root
+docker exec awardvantage_redis redis-cli -a YOUR_REDIS_PASSWORD FLUSHALL
+
+# Database backup
+docker exec awardvantage_wpcli wp db export backup-$(date +%Y%m%d-%H%M%S).sql --allow-root
+```
+
+## Troubleshooting
+
+### Plugin Activation Fails
+```bash
+docker logs awardvantage_wordpress 2>&1 | grep -i error
+docker exec awardvantage_wpcli wp eval '\MobilityTrailblazers\Core\MT_Activator::activate();' --allow-root
+```
+
+### 404 Errors on Custom Pages
+```bash
+docker exec awardvantage_wpcli wp rewrite flush --allow-root
+```
+
+### Jury Members Can Access Admin
+```bash
+# Verify role
+docker exec awardvantage_wpcli wp user get [username] --field=roles --allow-root
+
+# Reset capabilities
+docker exec awardvantage_wpcli wp cap add mt_jury_member mt_submit_evaluations --allow-root
+docker exec awardvantage_wpcli wp cap remove mt_jury_member manage_options --allow-root
+```
+
+### Redis Not Working
+```bash
+docker exec awardvantage_redis redis-cli -a YOUR_REDIS_PASSWORD ping
+docker exec awardvantage_wpcli wp redis info --allow-root
+```
+
+### Import Scripts Not Processing CSV
+Common issue with line endings or encoding:
+```bash
+# Fix line endings
+sed -i 's/\r$//' candidates.csv
+
+# Remove BOM
+sed -i '1s/^\xEF\xBB\xBF//' candidates.csv
+
+# Test CSV parsing
+while IFS=',' read -r name linkedin_url photo_filename; do
+    echo "[$name] [$linkedin_url] [$photo_filename]"
+done < candidates.csv | head -5
+```
+
+## Important Documentation
+
+- **SESSION-HANDOFF.md** - Recent debugging session details for import scripts
+- **DEPLOYMENT_GUIDE.md** - Complete deployment procedures
+- **IMPORT-GUIDE.md** - CSV import reference
+- **VERIFICATION_CHECKLIST.md** - Post-deployment verification
+- **wordpress_data/wp-content/plugins/best-teacher-award-class25/README.md** - Plugin documentation
+- **wordpress_data/wp-content/plugins/best-teacher-award-class25/SECURITY.md** - Security guidelines
+
+## Performance Optimization
+
+### WordPress Configuration
+```php
+// Already configured in compose.yaml WORDPRESS_CONFIG_EXTRA:
+define('WP_CACHE', true);
+define('DISABLE_WP_CRON', true);
+define('WP_MEMORY_LIMIT', '256M');
+define('WP_MAX_MEMORY_LIMIT', '256M');
+define('WP_REDIS_HOST', 'redis');
+define('WP_REDIS_PORT', 6379);
+define('WP_REDIS_PASSWORD', 'YOUR_REDIS_PASSWORD');
+```
+
+### Database Optimization
+Plugin includes `MT_Database_Optimizer` and `MT_Performance_Optimizer` for query optimization and caching strategies.
+
+### Audit Log Cleanup
+```bash
+# Clean logs older than 90 days
+docker exec awardvantage_wpcli wp eval '\MobilityTrailblazers\Core\MT_Audit_Logger::cleanup(90);' --allow-root
+```
