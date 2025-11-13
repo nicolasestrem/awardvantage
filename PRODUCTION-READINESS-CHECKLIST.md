@@ -102,8 +102,8 @@ docker exec awardvantage-wordpress-1 wp eval-file scripts/source-candidate-photo
 **Priority:** HIGH
 
 **Current Status:**
-- 30 test accounts with fake emails (@awardvantage-demo.local)
-- Generic German names, no bios, no photos
+- 30 accounts with production emails (@awardvantage.com catch-all)
+- Gender-neutral names (Jury Member 01-30), no bios, no photos
 
 **Decision Needed:**
 - Do you have real jury member data ready?

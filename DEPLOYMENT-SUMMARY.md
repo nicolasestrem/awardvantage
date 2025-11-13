@@ -264,11 +264,11 @@ Gunnar Froh, Jan Marco Leimeister, Judith Häberli, Karolin Frankenberger (faile
 #### Jury Accounts (30)
 | # | Username | Display Name | Email |
 |---|----------|--------------|-------|
-| 1 | jury01 | Gerhard Müller | jury01@awardvantage-demo.local |
-| 2 | jury02 | Monika Schwarz | jury02@awardvantage-demo.local |
-| 3 | jury03 | Daniel Schmitt | jury03@awardvantage-demo.local |
+| 1 | jury01 | Jury Member 01 | jury01@awardvantage.com |
+| 2 | jury02 | Jury Member 02 | jury02@awardvantage.com |
+| 3 | jury03 | Jury Member 03 | jury03@awardvantage.com |
 | ... | ... | ... | ... |
-| 30 | jury30 | Susanne Braun | jury30@awardvantage-demo.local |
+| 30 | jury30 | Jury Member 30 | jury30@awardvantage.com |
 
 **Password for all jury accounts:** JuryDemo2025!
 

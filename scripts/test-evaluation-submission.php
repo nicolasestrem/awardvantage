@@ -21,7 +21,7 @@ echo "Testing 2-Criteria Evaluation Submission\n";
 echo "Best-Teacher Award #class25\n";
 echo "===========================================\n\n";
 
-// Get first jury member (jury01 - Gerhard Müller, post ID 46, user ID 2)
+// Get first jury member (jury01 - Jury Member 01, post ID 46, user ID 2)
 $jury_member_post_id = 46;
 $jury_user_id = 2;
 
