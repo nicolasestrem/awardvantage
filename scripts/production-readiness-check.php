@@ -220,6 +220,8 @@ if (version_compare($wp_version, '6.0', '>=')) {
 
 // Check 14: Plugin Version
 echo "\n[14/15] Checking Plugin Version...\n";
+// Load plugin.php to make get_plugin_data() available
+require_once ABSPATH . 'wp-admin/includes/plugin.php';
 $plugin_data = get_plugin_data('/var/www/html/wp-content/plugins/mobility-trailblazers/mobility-trailblazers.php');
 echo "  Plugin version: {$plugin_data['Version']}\n";
 if (!empty($plugin_data['Version'])) {
