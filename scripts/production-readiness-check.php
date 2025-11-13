@@ -14,6 +14,9 @@ if (!defined('WP_CLI') && !defined('ABSPATH')) {
     exit('This script must be run via WP-CLI');
 }
 
+// Load shared configuration
+require_once __DIR__ . '/config.php';
+
 global $wpdb;
 
 echo "===========================================\n";
@@ -34,11 +37,11 @@ $candidates = get_posts([
 ]);
 $candidate_count = count($candidates);
 
-if ($candidate_count == 38) {
-    echo "  ✓ PASS: Exactly 38 candidates found\n";
+if ($candidate_count == CANDIDATE_COUNT) {
+    echo "  ✓ PASS: Exactly " . CANDIDATE_COUNT . " candidates found\n";
     $checks_passed++;
 } else {
-    echo "  ✗ FAIL: Expected 38 candidates, found $candidate_count\n";
+    echo "  ✗ FAIL: Expected " . CANDIDATE_COUNT . " candidates, found $candidate_count\n";
     $checks_failed++;
 }
 
@@ -102,11 +105,11 @@ if ($without_photos > 0) {
 // Check 5: Jury Member Count
 echo "\n[5/15] Checking Jury Members...\n";
 $jury_count = wp_count_posts('mt_jury_member');
-if ($jury_count->publish == 30) {
-    echo "  ✓ PASS: 30 jury members found\n";
+if ($jury_count->publish == JURY_MEMBER_COUNT) {
+    echo "  ✓ PASS: " . JURY_MEMBER_COUNT . " jury members found\n";
     $checks_passed++;
 } else {
-    echo "  ✗ FAIL: Expected 30 jury members, found {$jury_count->publish}\n";
+    echo "  ✗ FAIL: Expected " . JURY_MEMBER_COUNT . " jury members, found {$jury_count->publish}\n";
     $checks_failed++;
 }
 
@@ -135,7 +138,7 @@ if ($unlinked_jury == 0) {
 // Check 7: Jury Assignments
 echo "\n[7/15] Checking Jury Assignments...\n";
 $assignments_count = $wpdb->get_var("SELECT COUNT(*) FROM wp_mt_jury_assignments");
-$expected_assignments = 30 * 38; // 1140
+$expected_assignments = EXPECTED_ASSIGNMENTS;
 if ($assignments_count == $expected_assignments) {
     echo "  ✓ PASS: All assignments created ($assignments_count)\n";
     $checks_passed++;
@@ -278,9 +281,9 @@ echo "\n";
 echo "===========================================\n";
 echo "Key Statistics:\n";
 echo "===========================================\n";
-echo "• Candidates: 38\n";
-echo "• Candidates with Photos: $with_photos / 38\n";
-echo "• Jury Members: 30\n";
+echo "• Candidates: " . CANDIDATE_COUNT . "\n";
+echo "• Candidates with Photos: $with_photos / " . CANDIDATE_COUNT . "\n";
+echo "• Jury Members: " . JURY_MEMBER_COUNT . "\n";
 echo "• Total Assignments: $assignments_count\n";
 echo "• Test Evaluations: $test_eval_count\n";
 echo "• Evaluation Criteria: 2 (Didactic Excellence, Practical Impact)\n";

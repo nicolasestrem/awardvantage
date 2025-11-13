@@ -53,7 +53,7 @@ The system currently has **30 test jury member accounts** pre-configured for tes
 ### Test Account Credentials
 
 **Username Pattern:** `jury01` through `jury30`
-**Password:** (Set during installation - typically `JuryDemo2025!` or similar)
+**Password:** *Set during installation - stored securely, not documented*
 **Email Domain:** `@awardvantage.com` (production catch-all domain)
 
 ---

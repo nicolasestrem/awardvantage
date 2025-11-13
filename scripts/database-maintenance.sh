@@ -31,6 +31,17 @@ CONTAINER_NAME="awardvantage-wordpress-1"
 DB_CONTAINER="awardvantage-db-1"
 BACKUP_DIR="$PROJECT_ROOT/backups/db"
 
+# Load database credentials from .env file
+if [ -f "$PROJECT_ROOT/private/.env" ]; then
+    # Extract DB credentials from .env file
+    DB_USER=$(grep -E '^WORDPRESS_DB_USER=' "$PROJECT_ROOT/private/.env" | cut -d '=' -f 2)
+    DB_PASS=$(grep -E '^WORDPRESS_DB_PASSWORD=' "$PROJECT_ROOT/private/.env" | cut -d '=' -f 2)
+    DB_NAME=$(grep -E '^WORDPRESS_DB_NAME=' "$PROJECT_ROOT/private/.env" | cut -d '=' -f 2)
+else
+    print_error ".env file not found at $PROJECT_ROOT/private/.env"
+    exit 1
+fi
+
 # Functions
 print_header() {
     echo -e "${BLUE}========================================${NC}"
@@ -89,18 +100,18 @@ database_health_check() {
     fi
 
     echo -e "\n${BLUE}Database Statistics:${NC}"
-    docker exec $DB_CONTAINER mariadb -uaward -pawardpasssfdasdfasdfasdf awardvantage -e "
+    docker exec $DB_CONTAINER mariadb -u"$DB_USER" -p"$DB_PASS" "$DB_NAME" -e "
         SELECT
             COUNT(*) as total_tables,
             ROUND(SUM(data_length + index_length) / 1024 / 1024, 2) AS total_size_mb,
             ROUND(SUM(data_length) / 1024 / 1024, 2) AS data_size_mb,
             ROUND(SUM(index_length) / 1024 / 1024, 2) AS index_size_mb
         FROM information_schema.TABLES
-        WHERE table_schema = 'awardvantage';
+        WHERE table_schema = '$DB_NAME';
     "
 
     echo -e "\n${BLUE}Largest Tables:${NC}"
-    docker exec $DB_CONTAINER mariadb -uaward -pawardpasssfdasdfasdfasdf awardvantage -e "
+    docker exec $DB_CONTAINER mariadb -u"$DB_USER" -p"$DB_PASS" "$DB_NAME" -e "
         SELECT
             table_name,
             table_rows,
@@ -120,7 +131,7 @@ database_health_check() {
         WHERE table_schema = DATABASE()
         AND table_name LIKE 'wp_mt_%'
         ORDER BY table_name;
-    " --allow-root 2>/dev/null || docker exec $DB_CONTAINER mariadb -uaward -pawardpasssfdasdfasdfasdf awardvantage -e "
+    " --allow-root 2>/dev/null || docker exec $DB_CONTAINER mariadb -u"$DB_USER" -p"$DB_PASS" "$DB_NAME" -e "
         SELECT table_name, table_rows
         FROM information_schema.TABLES
         WHERE table_schema = 'awardvantage'
@@ -138,11 +149,11 @@ optimize_database() {
     echo -e "\n${BLUE}Optimizing all tables...${NC}"
 
     # Get list of tables
-    TABLES=$(docker exec $DB_CONTAINER mariadb -uaward -pawardpasssfdasdfasdfasdf awardvantage -N -e "SHOW TABLES;")
+    TABLES=$(docker exec $DB_CONTAINER mariadb -u"$DB_USER" -p"$DB_PASS" "$DB_NAME" -N -e "SHOW TABLES;")
 
     COUNT=0
     for TABLE in $TABLES; do
-        docker exec $DB_CONTAINER mariadb -uaward -pawardpasssfdasdfasdfasdf awardvantage -e "OPTIMIZE TABLE $TABLE;" >/dev/null 2>&1
+        docker exec $DB_CONTAINER mariadb -u"$DB_USER" -p"$DB_PASS" "$DB_NAME" -e "OPTIMIZE TABLE $TABLE;" >/dev/null 2>&1
         COUNT=$((COUNT+1))
         echo -n "."
     done
@@ -152,7 +163,7 @@ optimize_database() {
 
     # Check for fragmentation
     echo -e "\n${BLUE}Checking for table fragmentation...${NC}"
-    docker exec $DB_CONTAINER mariadb -uaward -pawardpasssfdasdfasdfasdf awardvantage -e "
+    docker exec $DB_CONTAINER mariadb -u"$DB_USER" -p"$DB_PASS" "$DB_NAME" -e "
         SELECT
             table_name,
             ROUND(data_length / 1024 / 1024, 2) AS data_mb,
@@ -204,13 +215,13 @@ cleanup_database() {
     print_success "Cleaned up expired transients"
 
     echo -e "\n${BLUE}Cleaning up orphaned post meta...${NC}"
-    ORPHANED=$(docker exec $DB_CONTAINER mariadb -uaward -pawardpasssfdasdfasdfasdf awardvantage -N -e "
+    ORPHANED=$(docker exec $DB_CONTAINER mariadb -u"$DB_USER" -p"$DB_PASS" "$DB_NAME" -N -e "
         SELECT COUNT(*) FROM wp_postmeta pm
         LEFT JOIN wp_posts p ON pm.post_id = p.ID
         WHERE p.ID IS NULL;
     ")
     if [ "$ORPHANED" -gt 0 ]; then
-        docker exec $DB_CONTAINER mariadb -uaward -pawardpasssfdasdfasdfasdf awardvantage -e "
+        docker exec $DB_CONTAINER mariadb -u"$DB_USER" -p"$DB_PASS" "$DB_NAME" -e "
             DELETE pm FROM wp_postmeta pm
             LEFT JOIN wp_posts p ON pm.post_id = p.ID
             WHERE p.ID IS NULL;
@@ -232,7 +243,7 @@ full_maintenance() {
     mkdir -p "$BACKUP_DIR"
     BACKUP_FILE="$BACKUP_DIR/pre-maintenance-$(date +%Y%m%d-%H%M%S).sql"
     docker exec $CONTAINER_NAME wp db export "$BACKUP_FILE" --allow-root 2>/dev/null || \
-        docker exec $DB_CONTAINER mariadb-dump -uaward -pawardpasssfdasdfasdfasdf awardvantage > "$BACKUP_FILE"
+        docker exec $DB_CONTAINER mariadb-dump -u"$DB_USER" -p"$DB_PASS" "$DB_NAME" > "$BACKUP_FILE"
     print_success "Backup created: $BACKUP_FILE"
 
     # Run all maintenance tasks

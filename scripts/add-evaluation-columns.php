@@ -25,9 +25,11 @@ echo "===========================================\n\n";
 
 // Database table name
 $table_name = $wpdb->prefix . 'mt_evaluations';
+// Escape table name for safe SQL usage
+$safe_table_name = esc_sql($table_name);
 
 // Check if table exists
-$table_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_name'") === $table_name;
+$table_exists = $wpdb->get_var("SHOW TABLES LIKE '$safe_table_name'") === $table_name;
 
 if (!$table_exists) {
     echo "ERROR: Table $table_name does not exist!\n";
@@ -38,13 +40,13 @@ echo "Table found: $table_name\n\n";
 
 // Check current columns
 echo "Checking existing columns...\n";
-$existing_columns = $wpdb->get_col("DESCRIBE $table_name");
+$existing_columns = $wpdb->get_col("DESCRIBE $safe_table_name");
 echo "Current columns: " . implode(', ', $existing_columns) . "\n\n";
 
 // Columns to add
 $columns_to_add = [
-    'didactic_excellence_score' => "ALTER TABLE $table_name ADD COLUMN didactic_excellence_score DECIMAL(3,1) DEFAULT NULL AFTER visibility_score",
-    'practical_impact_score' => "ALTER TABLE $table_name ADD COLUMN practical_impact_score DECIMAL(3,1) DEFAULT NULL AFTER didactic_excellence_score"
+    'didactic_excellence_score' => "ALTER TABLE $safe_table_name ADD COLUMN didactic_excellence_score DECIMAL(3,1) DEFAULT NULL AFTER visibility_score",
+    'practical_impact_score' => "ALTER TABLE $safe_table_name ADD COLUMN practical_impact_score DECIMAL(3,1) DEFAULT NULL AFTER didactic_excellence_score"
 ];
 
 $columns_added = 0;
@@ -77,7 +79,7 @@ echo "\n";
 
 // Verify columns were added
 echo "Verifying columns...\n";
-$updated_columns = $wpdb->get_col("DESCRIBE $table_name");
+$updated_columns = $wpdb->get_col("DESCRIBE $safe_table_name");
 echo "Updated columns: " . implode(', ', $updated_columns) . "\n\n";
 
 // Check if new columns exist

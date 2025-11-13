@@ -40,7 +40,9 @@
       "Bash(docker inspect:*)",
       "Bash(git add:*)",
       "Bash(xargs -I {} sh -c 'echo \"\"\"\"=== {} ===\"\"\"\" && grep -i -E \"\"\"\"(password|secret|key|token|credential)\"\"\"\" {} 2>/dev/null | head -5')",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(docker ps:*)",
+      "Bash(git mv:*)"
     ],
     "deny": [],
     "ask": []

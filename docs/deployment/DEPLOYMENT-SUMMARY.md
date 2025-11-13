@@ -63,7 +63,7 @@ Gunnar Froh, Jan Marco Leimeister, Judith Häberli, Karolin Frankenberger (faile
 ### Jury Members (30 Total)
 - **Total:** 30 jury members
 - **User Accounts:** All 30 linked (jury01-jury30)
-- **Password:** JuryDemo2025! (for all test accounts)
+- **Password:** *Configured during setup - not documented for security*
 - **Assignments:** Each jury evaluates all 38 candidates
 
 ### Evaluation System
@@ -234,7 +234,7 @@ Gunnar Froh, Jan Marco Leimeister, Judith Häberli, Karolin Frankenberger (faile
 ### Jury Member Access
 **URL:** http://localhost:8080/wp-login.php
 **Usernames:** jury01 through jury30
-**Password:** JuryDemo2025! (all accounts)
+**Password:** *Contact administrator for credentials*
 
 **Jury Tasks:**
 1. Login with credentials
@@ -270,7 +270,7 @@ Gunnar Froh, Jan Marco Leimeister, Judith Häberli, Karolin Frankenberger (faile
 | ... | ... | ... | ... |
 | 30 | jury30 | Jury Member 30 | jury30@awardvantage.com |
 
-**Password for all jury accounts:** JuryDemo2025!
+**Password for all jury accounts:** *Set during installation - stored securely*
 
 ---
 

@@ -14,6 +14,9 @@ if (!defined('WP_CLI') && !defined('ABSPATH')) {
     exit('This script must be run via WP-CLI');
 }
 
+// Load shared configuration
+require_once __DIR__ . '/config.php';
+
 global $wpdb;
 
 echo "===========================================\n";
@@ -32,11 +35,13 @@ echo "Step 1: Optimizing Custom Tables\n";
 echo "-------------------------------------------\n";
 foreach ($custom_tables as $table) {
     echo "Optimizing $table...";
-    $result = $wpdb->query("OPTIMIZE TABLE $table");
+    // Use esc_sql() to safely escape table name (from controlled whitelist above)
+    $safe_table = esc_sql($table);
+    $result = $wpdb->query("OPTIMIZE TABLE $safe_table");
     if ($result !== false) {
         echo " SUCCESS\n";
     } else {
-        echo " FAILED\n";
+        echo " FAILED: " . $wpdb->last_error . "\n";
     }
 }
 
@@ -136,8 +141,8 @@ echo "Jury Assignments: $assignments_count\n";
 $evaluations_count = $wpdb->get_var("SELECT COUNT(*) FROM wp_mt_evaluations");
 echo "Evaluations: $evaluations_count\n";
 
-// Expected assignments (30 jury × 38 candidates = 1140)
-$expected_assignments = 30 * 38;
+// Expected assignments (from config.php)
+$expected_assignments = EXPECTED_ASSIGNMENTS;
 echo "\n";
 if ($assignments_count == $expected_assignments) {
     echo "✓ Assignment count matches expected: $expected_assignments\n";

@@ -533,7 +533,7 @@ SUCCESS - Evaluation created with ID: 1
 # Test jury member login
 # Open browser: https://awardvantage.com/wp-login.php
 # Username: jury01
-# Password: JuryDemo2025!
+# Password: (Use the password set during Step 3.5)
 
 # Or verify via CLI:
 docker exec awardvantage-wordpress-1 wp user get jury01 --allow-root

@@ -71,7 +71,7 @@ docker exec awardvantage-wordpress-1 wp post delete 105 106 107 108 109 110 111 
 **Priority:** HIGH
 
 **Current Status:**
-- ✓ Photo audit complete (CANDIDATES-PHOTO-AUDIT.md)
+- ✓ Photo audit complete ([CANDIDATES-PHOTO-AUDIT.md](../operations/CANDIDATES-PHOTO-AUDIT.md))
 - ✓ Photo sourcing script created
 - ✗ Photos not yet downloaded
 
@@ -185,7 +185,7 @@ docker exec awardvantage-wordpress-1 wp eval-file scripts/source-candidate-photo
 # 3. Submit test evaluations
 
 # 4. Verify in database
-docker exec awardvantage-db-1 mariadb -uaward -pawardpasssfdasdfasdfasdf awardvantage -e "SELECT COUNT(*) FROM wp_mt_evaluations;"
+docker exec awardvantage-db-1 mariadb -u<DB_USER> -p<DB_PASSWORD> <DB_NAME> -e "SELECT COUNT(*) FROM wp_mt_evaluations;"
 
 # 5. Export to CSV via admin panel
 ```
@@ -427,7 +427,7 @@ docker exec awardvantage-wordpress-1 wp post list --post_type=mt_candidate --for
 docker exec awardvantage-wordpress-1 wp user list --role=mt_jury_member --format=count --allow-root
 
 # Check evaluations
-docker exec awardvantage-db-1 mariadb -uaward -pawardpasssfdasdfasdfasdf awardvantage -e "SELECT COUNT(*) FROM wp_mt_evaluations;"
+docker exec awardvantage-db-1 mariadb -u<DB_USER> -p<DB_PASSWORD> <DB_NAME> -e "SELECT COUNT(*) FROM wp_mt_evaluations;"
 
 # Export database
 docker exec awardvantage-wordpress-1 wp db export /tmp/backup.sql --allow-root
@@ -448,10 +448,10 @@ docker exec awardvantage-wordpress-1 wp user update jury01 --user_pass="NewPassw
 **Issue: Evaluation not saving**
 ```bash
 # Check database connection
-docker exec awardvantage-db-1 mariadb -uaward -pawardpasssfdasdfasdfasdf awardvantage -e "SELECT 1;"
+docker exec awardvantage-db-1 mariadb -u<DB_USER> -p<DB_PASSWORD> <DB_NAME> -e "SELECT 1;"
 
 # Check evaluations table
-docker exec awardvantage-db-1 mariadb -uaward -pawardpasssfdasdfasdfasdf awardvantage -e "DESCRIBE wp_mt_evaluations;"
+docker exec awardvantage-db-1 mariadb -u<DB_USER> -p<DB_PASSWORD> <DB_NAME> -e "DESCRIBE wp_mt_evaluations;"
 ```
 
 **Issue: Photos not displaying**
@@ -473,11 +473,11 @@ docker exec awardvantage-wordpress-1 wp rewrite flush --allow-root
 
 ## Documentation Files Reference
 
-1. **SYSTEM-VERIFICATION-REPORT.md** - Complete system audit
-2. **CANDIDATES-PHOTO-AUDIT.md** - Photo sourcing guide
-3. **JURY-MEMBER-ACCOUNTS.md** - Jury account documentation
+1. **[SYSTEM-VERIFICATION-REPORT.md](../reports/SYSTEM-VERIFICATION-REPORT.md)** - Complete system audit
+2. **[CANDIDATES-PHOTO-AUDIT.md](../operations/CANDIDATES-PHOTO-AUDIT.md)** - Photo sourcing guide
+3. **[JURY-MEMBER-ACCOUNTS.md](../operations/JURY-MEMBER-ACCOUNTS.md)** - Jury account documentation
 4. **PRODUCTION-READINESS-CHECKLIST.md** - This file
-5. **INSTALLATION-GUIDE.md** - Original installation instructions
+5. **[INSTALLATION-GUIDE.md](../../import/best-teacher-award-class25/INSTALLATION-GUIDE.md)** - Original installation instructions
 
 ---
 
