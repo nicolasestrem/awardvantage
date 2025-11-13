@@ -50,7 +50,8 @@
       "Bash(rsync:*)",
       "Bash(zip:*)",
       "Bash(tar:*)",
-      "Bash(python3:*)"
+      "Bash(python3:*)",
+      "Bash(xargs:*)"
     ],
     "deny": [],
     "ask": []
