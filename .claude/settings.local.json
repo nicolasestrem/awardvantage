@@ -42,7 +42,15 @@
       "Bash(xargs -I {} sh -c 'echo \"\"\"\"=== {} ===\"\"\"\" && grep -i -E \"\"\"\"(password|secret|key|token|credential)\"\"\"\" {} 2>/dev/null | head -5')",
       "Bash(git checkout:*)",
       "Bash(docker ps:*)",
-      "Bash(git mv:*)"
+      "Bash(git mv:*)",
+      "mcp__sequential-thinking__sequentialthinking",
+      "Bash(docker volume:*)",
+      "Bash(tree:*)",
+      "Bash(find:*)",
+      "Bash(rsync:*)",
+      "Bash(zip:*)",
+      "Bash(tar:*)",
+      "Bash(python3:*)"
     ],
     "deny": [],
     "ask": []
