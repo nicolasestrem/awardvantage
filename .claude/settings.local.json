@@ -26,7 +26,19 @@
       "Bash(else echo \"MISSING: $dir\")",
       "Bash(fi)",
       "Bash(done)",
-      "Bash(git config:*)"
+      "Bash(git config:*)",
+      "Bash(wp-docker --info:*)",
+      "Bash(wp-docker core version:*)",
+      "Bash(wp-docker db check:*)",
+      "Bash(wp-docker config get:*)",
+      "Bash(unzip:*)",
+      "Bash(docker-compose:*)",
+      "Bash(docker exec:*)",
+      "Bash(bash:*)",
+      "Bash(docker cp:*)",
+      "mcp__fetch__imageFetch",
+      "Bash(docker inspect:*)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []
